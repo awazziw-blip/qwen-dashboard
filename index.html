@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏛️ Qwen Auditor Dashboard — VF-DCA 3.0</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: #0a0e1a;
+    color: #e4e6eb;
+    padding: 20px;
+    line-height: 1.5;
+  }
+  .container { max-width: 1400px; margin: 0 auto; }
+  
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #1a1f35 0%, #0f1424 100%);
+    border: 1px solid #2a3148;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header h1 { font-size: 24px; color: #fff; }
+  .header .meta { font-size: 13px; color: #8b92a8; }
+  .status-badge {
+    background: #10b981;
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  
+  /* KPI Cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: #141929;
+    border: 1px solid #2a3148;
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .kpi-card .label { font-size: 12px; color: #8b92a8; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-card .value { font-size: 28px; font-weight: 700; color: #fff; margin-top: 8px; }
+  .kpi-card .sub { font-size: 12px; color: #8b92a8; margin-top: 4px; }
+  
+  /* V3 Actions Section */
+  .v3-section {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid #334155;
+    border-left: 4px solid #f59e0b;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .v3-section h2 { color: #f59e0b; font-size: 16px; margin-bottom: 14px; }
+  .v3-action {
+    background: rgba(245, 158, 11, 0.08);
+    border-left: 3px solid #f59e0b;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .v3-action strong { color: #fbbf24; }
+  
+  /* Portfolio Cards */
+  .portfolio-card {
+    background: #141929;
+    border: 1px solid #2a3148;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .portfolio-header {
+    background: #1a1f35;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #2a3148;
+  }
+  .portfolio-header h3 { font-size: 16px; color: #fff; }
+  .portfolio-header .p-id { color: #8b92a8; font-size: 13px; margin-left: 8px; }
+  .portfolio-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 16px 20px;
+    background: rgba(0,0,0,0.2);
+  }
+  .stat-item .stat-label { font-size: 11px; color: #8b92a8; text-transform: uppercase; }
+  .stat-item .stat-value { font-size: 18px; font-weight: 600; color: #fff; margin-top: 4px; }
+  
+  /* Holdings Table */
+  .holdings-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .holdings-table th {
+    background: #0f1424;
+    padding: 10px 12px;
+    text-align: left;
+    color: #8b92a8;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .holdings-table td {
+    padding: 10px 12px;
+    border-top: 1px solid #1f2538;
+  }
+  .holdings-table tr:hover { background: rgba(255,255,255,0.02); }
+  
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-buy { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+  .badge-nobuy { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+  .badge-sell { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+  .badge-blocked { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+  
+  /* Weight Bar */
+  .weight-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .weight-bar .bar {
+    flex: 1;
+    height: 6px;
+    background: #1f2538;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+  .weight-bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    border-radius: 3px;
+  }
+  .weight-bar .target-line {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    width: 2px;
+    background: #f59e0b;
+  }
+  
+  /* Audit Panel */
+  .audit-panel {
+    background: #141929;
+    border: 1px solid #2a3148;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+  }
+  .audit-panel h2 { font-size: 16px; color: #fff; margin-bottom: 14px; }
+  .audit-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+  }
+  .audit-item {
+    background: rgba(16, 185, 129, 0.08);
+    border-left: 3px solid #10b981;
+    padding: 10px 14px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .audit-item .label { color: #8b92a8; font-size: 11px; }
+  .audit-item .status { color: #10b981; font-weight: 600; margin-top: 2px; }
+  
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 20px;
+    color: #8b92a8;
+    font-size: 12px;
+    margin-top: 20px;
+  }
+  
+  @media (max-width: 768px) {
+    .portfolio-stats { grid-template-columns: repeat(2, 1fr); }
+    .holdings-table { font-size: 11px; }
+    .holdings-table th, .holdings-table td { padding: 6px 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <h1>🏛️ Qwen Auditor Dashboard</h1>
+      <div class="meta">VF-DCA 3.0 · Parallel Run Mode · Last Updated: <span id="lastUpdated"></span></div>
+    </div>
+    <div class="status-badge">🟢 PRODUCTION ACTIVE</div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <!-- V3 Strategic Actions -->
+  <div class="v3-section" id="v3Section" style="display:none;">
+    <h2>⚡ V3.0 STRATEGIC ACTIONS</h2>
+    <div id="v3Actions"></div>
+  </div>
+
+  <!-- Portfolios -->
+  <div id="portfolios"></div>
+
+  <!-- Audit Panel -->
+  <div class="audit-panel">
+    <h2>🛡️ AUDIT & INTEGRITY</h2>
+    <div class="audit-grid" id="auditGrid"></div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    Source: Qwen Independent Auditor · Master: VF-DCA 3.0 v3.0 · Data: <span id="dataDate"></span><br>
+    Parallel Run with Gemini V2.2 · This dashboard is independent from the original GitHub Dashboard
+  </div>
+
+</div>
+
+<script>
+// Load data from data.json
+fetch('data.json')
+  .then(r => r.json())
+  .then(data => render(data))
+  .catch(err => {
+    document.body.innerHTML = '<div style="padding:40px;color:#ef4444;">Error loading data.json: ' + err.message + '</div>';
+  });
+
+function fmt(n) {
+  return new Intl.NumberFormat('th-TH').format(Math.round(n));
+}
+
+function render(data) {
+  document.getElementById('lastUpdated').textContent = data.metadata.last_updated;
+  document.getElementById('dataDate').textContent = data.metadata.data_date;
+
+  // KPI Cards
+  const kpis = [
+    { label: 'Total Portfolio Value', value: '฿' + fmt(data.summary.total_portfolio_value), sub: 'All 5 Portfolios' },
+    { label: 'Monthly Budget', value: '฿' + fmt(data.summary.total_monthly_budget), sub: 'P001-P004' },
+    { label: 'Total Execution', value: '฿' + fmt(data.summary.total_execution), sub: 'This Cycle' },
+    { label: 'V3.0 Actions', value: data.summary.v3_actions_count, sub: 'Profit-Taking / Caps' },
+    { label: 'Remaining Cash', value: '฿' + fmt(data.summary.total_remaining), sub: 'Policy: HOLD' }
+  ];
+  document.getElementById('kpiGrid').innerHTML = kpis.map(k => `
+    <div class="kpi-card">
+      <div class="label">${k.label}</div>
+      <div class="value">${k.value}</div>
+      <div class="sub">${k.sub}</div>
+    </div>
+  `).join('');
+
+  // V3 Actions
+  if (data.v3_strategic_actions.length > 0) {
+    document.getElementById('v3Section').style.display = 'block';
+    document.getElementById('v3Actions').innerHTML = data.v3_strategic_actions.map(a => {
+      let icon = a.type === 'PROFIT_TAKING' ? '💰' : a.type === 'GROUP_CAP_BLOCKED' ? '🛡️' : '🎯';
+      let detail = '';
+      if (a.type === 'PROFIT_TAKING') {
+        detail = `${a.portfolio} · ${a.ticker}: Sold ${Math.abs(a.shares).toLocaleString()} shares = +฿${fmt(a.cash_inflow)} — ${a.reason}`;
+      } else if (a.type === 'GROUP_CAP_BLOCKED') {
+        detail = `${a.portfolio} · ${a.ticker}: Blocked — ${a.reason}`;
+      } else {
+        detail = `${a.portfolio} · ${a.tickers.join(', ')}: ${a.reason}`;
+      }
+      return `<div class="v3-action"><strong>${icon} ${a.type.replace(/_/g,' ')}</strong><br>${detail}</div>`;
+    }).join('');
+  }
+
+  // Portfolios
+  document.getElementById('portfolios').innerHTML = data.portfolios.map(p => {
+    const holdings = p.holdings.length > 0 ? `
+      <table class="holdings-table">
+        <thead>
+          <tr>
+            <th>Ticker</th>
+            <th>Value (฿)</th>
+            <th>Weight Allocation</th>
+            <th>Gap</th>
+            <th>Action</th>
+            <th>Actual Buy</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${p.holdings.map(h => {
+            const gapColor = h.gap > 0 ? '#10b981' : h.gap < 0 ? '#ef4444' : '#8b92a8';
+            const badgeClass = h.action === 'BUY' ? 'badge-buy' : 
+                              h.action === 'NO BUY' ? 'badge-nobuy' :
+                              h.action.includes('SELL') ? 'badge-sell' : 'badge-blocked';
+            const barWidth = Math.min(h.weight, 50) * 2;
+            const targetPos = Math.min(h.target, 50) * 2;
+            return `
+              <tr>
+                <td><strong>${h.ticker}</strong>${h.note ? '<br><small style="color:#8b92a8;">' + h.note + '</small>' : ''}</td>
+                <td>${fmt(h.value)}</td>
+                <td>
+                  <div class="weight-bar">
+                    <div class="bar">
+                      <div class="fill" style="width:${barWidth}%;"></div>
+                      <div class="target-line" style="left:${targetPos}%;"></div>
+                    </div>
+                    <span style="font-size:11px;color:#8b92a8;">${h.weight.toFixed(1)}% / ${h.target.toFixed(0)}%</span>
+                  </div>
+                </td>
+                <td style="color:${gapColor};font-weight:600;">${h.gap > 0 ? '+' : ''}${h.gap.toFixed(2)}%</td>
+                <td><span class="badge ${badgeClass}">${h.action}</span></td>
+                <td>${h.actual_buy > 0 ? '฿' + fmt(h.actual_buy) : '—'}</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    ` : '<div style="padding:30px;text-align:center;color:#8b92a8;">No holdings — DEFERRED</div>';
+
+    return `
+      <div class="portfolio-card">
+        <div class="portfolio-header">
+          <h3>${p.name} <span class="p-id">${p.id}</span> <span style="color:#8b92a8;font-size:12px;margin-left:8px;">${p.type}</span></h3>
+          <span class="badge ${p.status.includes('PASS') ? 'badge-buy' : 'badge-blocked'}">${p.status}</span>
+        </div>
+        <div class="portfolio-stats">
+          <div class="stat-item"><div class="stat-label">Portfolio Value</div><div class="stat-value">฿${fmt(p.value)}</div></div>
+          <div class="stat-item"><div class="stat-label">Budget</div><div class="stat-value">฿${fmt(p.budget)}</div></div>
+          <div class="stat-item"><div class="stat-label">Execution</div><div class="stat-value">฿${fmt(p.execution)}</div></div>
+          <div class="stat-item"><div class="stat-label">Remaining</div><div class="stat-value">฿${fmt(p.remaining)}</div></div>
+        </div>
+        ${holdings}
+      </div>
+    `;
+  }).join('');
+
+  // Audit Panel
+  const auditItems = Object.entries(data.audit).filter(([k]) => k !== 'corrections').map(([k, v]) => `
+    <div class="audit-item">
+      <div class="label">${k.replace(/_/g,' ').toUpperCase()}</div>
+      <div class="status">✓ ${v}</div>
+    </div>
+  `).join('');
+  document.getElementById('auditGrid').innerHTML = auditItems + 
+    (data.audit.corrections.length > 0 ? `
+      <div class="audit-item" style="grid-column:1/-1;border-left-color:#f59e0b;background:rgba(245,158,11,0.08);">
+        <div class="label" style="color:#f59e0b;">CORRECTIONS LOGGED</div>
+        <div style="color:#fbbf24;font-size:12px;margin-top:4px;">
+          ${data.audit.corrections.map(c => '• ' + c).join('<br>')}
+        </div>
+      </div>
+    ` : '');
+}
+</script>
+</body>
+</html>
